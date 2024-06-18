@@ -6,6 +6,7 @@ const Index = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [language, setLanguage] = useState("en");
+  const [geminiTranslation, setGeminiTranslation] = useState("");
 
   const handleSend = async () => {
     if (input.trim() === "") return;
@@ -17,6 +18,9 @@ const Index = () => {
       const response = await axios.post("https://api.example.com/chat", { message: input });
       const botMessage = { text: response.data.reply, sender: "bot" };
       setMessages((prevMessages) => [...prevMessages, botMessage]);
+
+      // Call Gemini translation
+      await handleGeminiTranslate(input);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -35,6 +39,20 @@ const Index = () => {
     } catch (error) {
       console.error("Error translating message:", error);
       return text;
+    }
+  };
+
+  const handleGeminiTranslate = async (text) => {
+    try {
+      const response = await axios.post("https://translation.googleapis.com/language/translate/v2", {
+        q: text,
+        source: "es",
+        target: "th",
+        key: "YOUR_GOOGLE_TRANSLATE_API_KEY",
+      });
+      setGeminiTranslation(response.data.data.translations[0].translatedText);
+    } catch (error) {
+      console.error("Error translating message with Gemini:", error);
     }
   };
 
@@ -68,6 +86,11 @@ const Index = () => {
               {message.text}
             </Text>
           ))}
+          {geminiTranslation && (
+            <Text alignSelf="flex-start" bg="green.100" p={2} borderRadius="md">
+              Gemini Translation: {geminiTranslation}
+            </Text>
+          )}
         </VStack>
         <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type your message..." />
         <Button onClick={handleSend} colorScheme="blue">Send</Button>
